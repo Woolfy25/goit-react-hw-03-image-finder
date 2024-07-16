@@ -15,7 +15,7 @@ export class App extends React.Component {
       showModal: false,
       modalImageSrc: '',
       modalImageAlt: '',
-      query: 'nature',
+      query: 'cat',
       loading: false,
     };
   }
