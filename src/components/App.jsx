@@ -4,34 +4,57 @@ import Searchbar from './Searchbar';
 import ImageGallery from './ImageGallery';
 import Button from './Button';
 import Modal from './Modal';
+import { Circles } from 'react-loader-spinner';
 
 export class App extends React.Component {
   constructor() {
     super();
     this.state = {
-      images: [
-        // Example items, replace with your actual data
-        {
-          id: '1',
-          src: 'https://img.freepik.com/free-photo/photo-stone-texture-pattern_58702-12225.jpg?t=st=1721142306~exp=1721145906~hmac=c942ff26baffeb41b5e6087ac3246929592225357ec1c2d9199f00cfae3b53e5&w=996',
-          alt: 'Image 1',
-          largeSrc: 'large-image1.jpg',
-        },
-        {
-          id: '2',
-          src: 'https://img.freepik.com/free-photo/abstract-colorful-splash-3d-background-generative-ai-background_60438-2503.jpg?t=st=1721141905~exp=1721145505~hmac=54de16a1ffcaa0a51814f119dc9c52e4c4015c9d111532318b0278a05eeb5a5e&w=1060',
-          alt: 'Image 2',
-          largeSrc: 'large-image2.jpg',
-        },
-      ],
-
+      images: [],
+      page: 1,
       showModal: false,
       modalImageSrc: '',
       modalImageAlt: '',
+      query: '',
+      loading: false,
     };
   }
   handleValue = search => {
-    console.log('search', search);
+    this.setState({ query: search, page: 1, images: [] }, this.fetchImages);
+  };
+
+  fetchImages = async () => {
+    this.setState({ loading: true });
+    const { query, page } = this.state;
+    const API_KEY = '44948375-490a2b5531ef23b5637f1620a';
+    const URL = `https://pixabay.com/api/?q=${query}&page=${page}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`;
+
+    try {
+      const response = await fetch(URL);
+      const data = await response.json();
+      this.setState(prevState => ({
+        images: [
+          ...prevState.images,
+          ...data.hits.map(hit => ({
+            id: hit.id,
+            src: hit.webformatURL,
+            alt: hit.tags,
+            largeSrc: hit.largeImageURL,
+          })),
+        ],
+        loading: false,
+      }));
+    } catch (error) {
+      console.error('Error fetching images:', error);
+      this.setState({ loading: false });
+    }
+  };
+
+  loadMoreImages = () => {
+    this.setState(
+      prevState => ({ page: prevState.page + 1 }),
+      this.fetchImages
+    );
   };
 
   openModal = (src, alt) => {
@@ -51,22 +74,24 @@ export class App extends React.Component {
   };
 
   render() {
-    const { images, showModal, modalImageSrc, modalImageAlt } = this.state;
+    const { images, showModal, modalImageSrc, modalImageAlt, loading } =
+      this.state;
     return (
-      // <div
-      //   style={{
-      //     height: '100vh',
-      //     display: 'flex',
-      //     justifyContent: 'center',
-      //     alignItems: 'center',
-      //     fontSize: 40,
-      //     color: '#010101',
-      //   }}
-      // >
-      //   <Searchbar />
-      // </div>
       <div className={css.App}>
         <Searchbar onSubmit={this.handleValue} />
+        {loading && (
+          <div className={css.Loader}>
+            <Circles
+              height="80"
+              width="80"
+              color="#7703fc"
+              ariaLabel="circles-loading"
+              wrapperStyle={{}}
+              wrapperClass=""
+              visible={true}
+            />
+          </div>
+        )}
         <ImageGallery items={images} onImageClick={this.openModal} />
         {images.length > 0 && <Button onClick={this.loadMoreImages} />}
         {showModal && (
