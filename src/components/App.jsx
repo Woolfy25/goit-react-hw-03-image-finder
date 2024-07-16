@@ -15,13 +15,17 @@ export class App extends React.Component {
       showModal: false,
       modalImageSrc: '',
       modalImageAlt: '',
-      query: '',
+      query: 'nature',
       loading: false,
     };
   }
   handleValue = search => {
     this.setState({ query: search, page: 1, images: [] }, this.fetchImages);
   };
+
+  componentDidMount() {
+    this.fetchImages();
+  }
 
   fetchImages = async () => {
     this.setState({ loading: true });
@@ -35,12 +39,17 @@ export class App extends React.Component {
       this.setState(prevState => ({
         images: [
           ...prevState.images,
-          ...data.hits.map(hit => ({
-            id: hit.id,
-            src: hit.webformatURL,
-            alt: hit.tags,
-            largeSrc: hit.largeImageURL,
-          })),
+          ...data.hits
+            .map(hit => ({
+              id: hit.id,
+              src: hit.webformatURL,
+              alt: hit.tags,
+              largeSrc: hit.largeImageURL,
+            }))
+            .filter(
+              newImage =>
+                !prevState.images.some(image => image.id === newImage.id)
+            ),
         ],
         loading: false,
       }));
